@@ -1,137 +1,36 @@
-from urllib.parse import parse_qs, urlencode, urlsplit
-from typing import Any, Dict
 import requests
 from datetime import datetime
-from database import Database
 
-missing_ids = ['catalog', 'status']
-user_agent = 'vinted-ios Vinted/22.6.1 (lt.manodrabuziai.fr; build:21794; iOS 15.2.0) iPhone10,6'
-device_model = 'iPhone10,6'
-app_version = '22.6.1'
+user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+app_version = '2.57.0'
+device_model = 'Windows'
 
-session = {}
+session = None
 
+def get_oauth_token():
+    """
+    Get an OAuth token from the Vinted API.
 
-def get_oauth_token() -> Dict[str, str]:
-    global session
-
-    payload = {
-        "grant_type": "password",
-        "client_id": "ios",
-        "scope": "public"
-    }
-
-    if (session and 'refresh_token' in session):
-        payload['grant_type'] = 'refresh_token'
-        payload['refresh_token'] = session['refresh_token']
-    
+    Returns:
+        dict: The OAuth token response.
+    """
     response = requests.post(
-        url='https://www.vinted.fr/oauth/token',
-        headers={
-            'User-Agent': user_agent,
+        url='https://www.vinted.fr/api/v2/oauth/token',
+        data={
+            'grant_type': 'client_credentials',
+            'client_id': 'your_client_id',
+            'client_secret': 'your_client_secret'
         },
-        json=payload,
-    )
-
-    if response.status_code != 200:
-        return False
-
-    content = response.json()
-
-    return {
-        'access_token': content['access_token'],
-        'refresh_token': content['refresh_token'],
-        'expiration_date': content['created_at'] + content['expires_in']
-    }
-
-
-def parse_url(url: str) -> Dict[str, str]:
-    """
-    Parse query strings
-
-    Args:
-        url (str): Web URL
-
-    Returns:
-        Dict[str, str]: Query values as dict
-    """
-    parts = urlsplit(url)
-    query = parse_qs(parts.query)
-    results = {}
-
-    for q, v in query.items():
-        is_array = False
-
-        if q.endswith('[]'):
-            q = q.rstrip('[]')
-            is_array = True
-
-        if q in missing_ids:
-            q += '_id'
-
-        if not q.endswith('s') and is_array:
-            q += 's'
-
-        results[q] = ','.join(v)
-
-    return results
-
-
-def search(url: str, query: Dict[str, str] = {}) -> Dict[str, Any]:
-    """
-    Search items from the Vinted API
-    using a web URL.
-
-
-    Args:
-        url (str): Original URL
-        query (Dict[str, str]): Additional queries to merge
-
-    Returns:
-        Any: JSON results
-    """
-
-    global session
-
-    if (not session or session['expiration_date'] < datetime.now().timestamp()):
-        session = get_oauth_token()
-
-    query = dict(parse_url(url), **query)
-
-    response = requests.get(
-        url='https://www.vinted.fr/api/v2/catalog/items?' + urlencode(query),
         headers={
-            'Authorization': f'Bearer {session["access_token"]}',
             'User-Agent': user_agent,
             'x-app-version': app_version,
             'x-device-model': device_model,
             'short-bundle-version': app_version,
-            'Accept': 'application/json',
-            'Accept-Language': 'fr-FR'
+            'Accept': 'application/json'
         }
     )
-    
+
     if response.status_code != 200:
-        return False
+        return None
 
     return response.json()
-
-def search_item(item_id: str, channel_id: str):
-    """
-    Retrieve item data from MongoDB database
-
-    Args:
-        item_id (str): Item ID to search for
-        channel_id (str): Channel ID to determine collection
-
-    Returns:
-        dict: Item data or None if not found
-    """
-    db = Database.get_instance()
-    collection_name = db.sanitize_collection_name(channel_id)
-    collection = db.db[collection_name]
-    
-    item = collection.find_one({'item_id': str(item_id)})
-    if item:
-        return {'item': item}
-    return None
