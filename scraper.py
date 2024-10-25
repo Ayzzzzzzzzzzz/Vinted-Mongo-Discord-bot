@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 from database import Database
+import hikari
 from lightbulb import BotApp
 from datetime import datetime
 
