@@ -55,16 +55,16 @@ def scrape(db: Database, params: Dict[str, Any]) -> List:
     return results
 
 
-def generate_embed(item: Any, sub_id: int, item_res: Any) -> hikari.Embed:
+def generate_embed(item: Any, sub_id: int, item_res: Any) -> discord.Embed:
     """
     Generate an embed with item details
     """
     try:
         # Create base embed
-        embed = hikari.Embed(
+        embed = discord.Embed(
             title=item.get("title", "No Title"),
             url=item.get("url", ""),
-            color=hikari.Color(0x09B1BA)
+            color=discord.Color.from_rgb(9, 177, 186)
         )
 
         # Set image if available
@@ -102,30 +102,4 @@ def generate_embed(item: Any, sub_id: int, item_res: Any) -> hikari.Embed:
         return embed
     except Exception as e:
         log.error(f"Error generating embed: {e}")
-        return hikari.Embed(title="Error", description="Failed to generate item embed")
-    if str(item["currency"]) == "EUR":
-        currency = "?"
-    else:
-        currency = " " + str(item["currency"])
-    embed = hikari.Embed()
-    embed.title = item["title"]
-    embed.url = item["url"]
-    embed.set_image(item["photo"]["url"])
-    embed.color = hikari.Color(0x09B1BA)
-    embed.add_field("? Prix", "```" + str(item["price"]) + currency + " | " + str(item_res["item"]["total_item_price"]) + currency + " TTC ```", inline=True)
-    embed.add_field("? Etat", "```" + item_res["item"]["status"] + "```", inline=True)
-    embed.add_field("? Avis", "```?" + str(item_res["item"]["user"]["positive_feedback_count"]) + " - ?" + str(item_res["item"]["user"]["negative_feedback_count"]) + "```", inline=True)
-    embed.add_field(":label: Marque", "```" + item_res["item"]["brand"] + "```", inline=True)
-    embed.add_field("? Taille", "```" + item["size_title"] + "```", inline=True)
-    embed.add_field("? Loc", "```" + item_res["item"]["user"]["city"] + " (" + item_res["item"]["user"]["country_title"] + ")" + "```", inline=True)
-    
-    date = datetime.fromtimestamp(
-        int(item["photo"]["high_resolution"]["timestamp"])
-    ).strftime("%d/%m/%Y, %H:%M:%S")
-    embed.set_footer(f'Published on {date} ? Subscription #{str(sub_id)}')
-    embed.set_author(
-        name="Posted by " + item["user"]["login"],
-        url=item["user"]["profile_url"],
-    )
-
-    return embed
+        return discord.Embed(title="Error", description="Failed to generate item embed")

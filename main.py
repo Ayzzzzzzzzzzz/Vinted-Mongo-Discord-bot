@@ -25,12 +25,14 @@ async def run_background() -> None:
             items = scrape(db, sub)
             if items:
                 log.debug("{items} found for {id}", items=len(items), id=str(sub["_id"]))
-                for item in items:
-                    item_res = search_item(item["id"])
-                    if item_res:
-                        if str(item_res["item"]["user"]["feedback_count"]) != "0":
-                            embed = generate_embed(item, sub["_id"], item_res)
-                            await bot.rest.create_message(sub["channel_id"], embed=embed)
+                channel = bot.get_channel(int(sub["channel_id"]))
+                if channel:
+                    for item in items:
+                        item_res = search_item(item["id"])
+                        if item_res:
+                            if str(item_res["item"]["user"]["feedback_count"]) != "0":
+                                embed = generate_embed(item, sub["_id"], item_res)
+                                await channel.send(embed=embed)
 
             if len(items) > 0:
                 # Update last_sync timestamp for the subscription
@@ -45,13 +47,27 @@ async def ready_listener(_):
     log.info("{count} subscriptions registered", count=len(db.get_subscriptions()))
     asyncio.create_task(run_background())
 
-@bot.command()
-@lightbulb.option("url", "URL to vinted search", type=str, required=True)
-@lightbulb.option("channel_name", "Name of the channel for alerts", type=str, required=True)
-@lightbulb.option("category_id", "ID of category for alerts", type=str, required=True)
-@lightbulb.command("subscribe", "Subscribe to a Vinted search")
-@lightbulb.implements(lightbulb.SlashCommand)
-async def subscribe(ctx: lightbulb.Context) -> None:
+@bot.tree.command(name="subscribe", description="Subscribe to a Vinted search")
+async def subscribe(
+    interaction: discord.Interaction,
+    url: str,
+    channel_name: str,
+    category_id: str
+):
+    await interaction.response.defer()
+    guild = interaction.guild
+    
+    if guild:
+        category = discord.utils.get(guild.categories, id=int(category_id))
+        if category:
+            new_channel = await guild.create_text_channel(channel_name, category=category)
+            subscription_id = db.insert_subscription(url, new_channel.id)
+            log.info("Subscription created for {url}", url=url)
+            await interaction.followup.send(f"? Created subscription in #{new_channel.name} under {category.name}")
+        else:
+            await interaction.followup.send("? Error: Could not find the specified category by ID.")
+    else:
+        await interaction.followup.send("? Error: Could not find the server (guild).")
     guild_id = ctx.interaction.guild_id
 
     if guild_id:
