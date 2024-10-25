@@ -92,24 +92,13 @@ class Database:
     def insert_item(self, item_data, channel_id):
         collection_name = self.sanitize_collection_name(channel_id)
         collection = self.db[collection_name]
-        
-        # Validate required fields
-        required_fields = ['id', 'title', 'price', 'url']
-        for field in required_fields:
-            if field not in item_data:
-                raise ValueError(f"Item data missing required field: {field}")
-        
-        # Prepare item data
+        # Ensure we have the required fields
+        if 'id' not in item_data:
+            raise ValueError("Item data missing required 'id' field")
         item_data['timestamp'] = datetime.now()
-        item_data['item_id'] = str(item_data['id'])
-        
-        try:
-            collection.insert_one(item_data)
-            log.info(f"Inserted item {item_data['id']} into {collection_name}")
-            self.cleanup_collection(collection_name)
-        except Exception as e:
-            log.error(f"Failed to insert item: {e}")
-            raise
+        item_data['item_id'] = item_data['id']
+        collection.insert_one(item_data)
+        self.cleanup_collection(collection_name)
 
     def item_exists(self, item_id, channel_id):
         collection_name = self.sanitize_collection_name(channel_id)

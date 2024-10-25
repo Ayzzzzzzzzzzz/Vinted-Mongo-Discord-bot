@@ -59,51 +59,14 @@ def scrape(db: Database, params: Dict[str, Any]) -> List:
 def generate_embed(item: Any, sub_id: int, item_res: Any) -> hikari.Embed:
     """
     Generate an embed with item details
+
+    Args:
+        item (Any): Scraped item
+        sub_id (int): Subscription ID
+
+    Returns:
+        hikari.Embed: Generated embed
     """
-    try:
-        # Create base embed
-        embed = hikari.Embed(
-            title=item.get("title", "No Title"),
-            url=item.get("url", ""),
-            color=hikari.Color(0x09B1BA)
-        )
-
-        # Set image if available
-        if item.get("photo", {}).get("url"):
-            embed.set_image(item["photo"]["url"])
-
-        # Add price information
-        currency = "?" if item.get("currency") == "EUR" else f" {item.get('currency', '')}"
-        price = f"{item.get('price', 'N/A')}{currency}"
-        total_price = f"{item_res.get('item', {}).get('total_item_price', 'N/A')}{currency}"
-        embed.add_field("Price", f"```{price} | {total_price} Total```", inline=True)
-
-        # Add item details
-        embed.add_field("Condition", f"```{item_res.get('item', {}).get('status', 'N/A')}```", inline=True)
-        embed.add_field("Brand", f"```{item_res.get('item', {}).get('brand', 'N/A')}```", inline=True)
-        embed.add_field("Size", f"```{item.get('size_title', 'N/A')}```", inline=True)
-
-        # Add user information
-        user_data = item_res.get('item', {}).get('user', {})
-        location = f"{user_data.get('city', 'N/A')} ({user_data.get('country_title', 'N/A')})"
-        embed.add_field("Location", f"```{location}```", inline=True)
-
-        # Set footer with timestamp
-        if item.get("photo", {}).get("high_resolution", {}).get("timestamp"):
-            date = datetime.fromtimestamp(int(item["photo"]["high_resolution"]["timestamp"]))
-            embed.set_footer(f'Published on {date.strftime("%d/%m/%Y, %H:%M:%S")} ? Subscription #{str(sub_id)}')
-
-        # Set author
-        if item.get("user", {}).get("login"):
-            embed.set_author(
-                name=f"Posted by {item['user']['login']}",
-                url=item['user'].get('profile_url', '')
-            )
-
-        return embed
-    except Exception as e:
-        log.error(f"Error generating embed: {e}")
-        return hikari.Embed(title="Error", description="Failed to generate item embed")
     if str(item["currency"]) == "EUR":
         currency = "?"
     else:
