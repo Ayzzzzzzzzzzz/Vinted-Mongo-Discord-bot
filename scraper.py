@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 from database import Database
-import hikari
+import discord
 from lightbulb import BotApp
 from datetime import datetime
 
@@ -56,7 +56,7 @@ def scrape(db: Database, params: Dict[str, Any]) -> List:
     return results
 
 
-def generate_embed(item: Any, sub_id: int, item_res: Any) -> hikari.Embed:
+def generate_embed(item: Any, sub_id: int, item_res: Any) -> discord.Embed:
     """
     Generate an embed with item details
 
@@ -65,17 +65,17 @@ def generate_embed(item: Any, sub_id: int, item_res: Any) -> hikari.Embed:
         sub_id (int): Subscription ID
 
     Returns:
-        hikari.Embed: Generated embed
+        discord.Embed: Generated embed
     """
     if str(item["currency"]) == "EUR":
         currency = "?"
     else:
         currency = " " + str(item["currency"])
-    embed = hikari.Embed()
+    embed = discord.Embed()
     embed.title = item["title"]
     embed.url = item["url"]
     embed.set_image(item["photo"]["url"])
-    embed.color = hikari.Color(0x09B1BA)
+    embed.color = 0x09B1BA
     embed.add_field("? Prix", "```" + str(item["price"]) + currency + " | " + str(item_res["item"]["total_item_price"]) + currency + " TTC ```", inline=True)
     embed.add_field("? Etat", "```" + item_res["item"]["status"] + "```", inline=True)
     embed.add_field("? Avis", "```?" + str(item_res["item"]["user"]["positive_feedback_count"]) + " - ?" + str(item_res["item"]["user"]["negative_feedback_count"]) + "```", inline=True)
@@ -86,7 +86,7 @@ def generate_embed(item: Any, sub_id: int, item_res: Any) -> hikari.Embed:
     date = datetime.fromtimestamp(
         int(item["photo"]["high_resolution"]["timestamp"])
     ).strftime("%d/%m/%Y, %H:%M:%S")
-    embed.set_footer(f'Published on {date} ? Subscription #{str(sub_id)}')
+    embed.set_footer(text=f'Published on {date} ? Subscription #{str(sub_id)}')
     embed.set_author(
         name="Posted by " + item["user"]["login"],
         url=item["user"]["profile_url"],
