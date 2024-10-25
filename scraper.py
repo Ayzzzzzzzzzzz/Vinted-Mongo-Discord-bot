@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 from database import Database
-import discord
+import hikari
+from lightbulb import BotApp
 from datetime import datetime
 
 from api import search

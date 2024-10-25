@@ -1,9 +1,8 @@
 import asyncio
 import os
 import json
-import discord
-from discord import app_commands
-from discord.ext import commands
+import hikari
+import lightbulb
 from loguru import logger as log
 from api import search_item
 from database import Database
