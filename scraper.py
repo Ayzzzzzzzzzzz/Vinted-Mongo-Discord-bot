@@ -45,9 +45,9 @@ def scrape(db: Database, params: Dict[str, Any]) -> List:
             continue
 
         if timestamp > params["last_sync"] and "id" in item:
-            if not db.item_exists(item["id"], params["channel_id"]):
+            if not db.item_exists(item["id"], str(params["channel_id"])):
                 results.append(item)
-                db.insert_item(item["id"], params["channel_id"])
+                db.insert_item(item, str(params["channel_id"]))
 
     return results
 
