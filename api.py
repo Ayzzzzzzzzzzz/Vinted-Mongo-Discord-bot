@@ -2,6 +2,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 from typing import Any, Dict
 import requests
 from datetime import datetime
+from database import Database
 
 missing_ids = ['catalog', 'status']
 user_agent = 'vinted-ios Vinted/22.6.1 (lt.manodrabuziai.fr; build:21794; iOS 15.2.0) iPhone10,6'
@@ -115,36 +116,22 @@ def search(url: str, query: Dict[str, str] = {}) -> Dict[str, Any]:
 
     return response.json()
 
-def search_item(item: int):
+def search_item(item_id: str, channel_id: str):
     """
-    Search items from the Vinted API
-    using a web URL.
+    Retrieve item data from MongoDB database
 
     Args:
-        item (int): Item id
+        item_id (str): Item ID to search for
+        channel_id (str): Channel ID to determine collection
 
     Returns:
-        Any: JSON results
+        dict: Item data or None if not found
     """
-
-    global session
-
-    if (not session or session['expiration_date'] < datetime.now().timestamp()):
-        session = get_oauth_token()
-        
-    response = requests.get(
-        url='https://www.vinted.fr/api/v2/items/' + str(item),
-        headers={
-            'Authorization': f'Bearer {session["access_token"]}',
-            'User-Agent': user_agent,
-            'x-app-version': app_version,
-            'x-device-model': device_model,
-            'short-bundle-version': app_version,
-            'Accept': 'application/json'
-        }
-    )
+    db = Database.get_instance()
+    collection_name = db.sanitize_collection_name(channel_id)
+    collection = db.db[collection_name]
     
-    if response.status_code != 200:
-        return False
-
-    return response.json()
+    item = collection.find_one({'item_id': str(item_id)})
+    if item:
+        return {'item': item}
+    return None

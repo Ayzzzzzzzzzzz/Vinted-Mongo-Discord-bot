@@ -25,7 +25,7 @@ async def run_background() -> None:
             if items:
                 log.debug("{items} found for {id}", items=len(items), id=str(sub["_id"]))
                 for item in items:
-                    item_res = search_item(item["id"])
+                    item_res = search_item(str(item["id"]), str(sub["channel_id"]))
                     if item_res:
                         if str(item_res["item"]["user"]["feedback_count"]) != "0":
                             embed = generate_embed(item, sub["_id"], item_res)
