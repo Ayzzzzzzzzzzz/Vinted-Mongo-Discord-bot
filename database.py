@@ -92,14 +92,11 @@ class Database:
     def insert_item(self, item_data, channel_id):
         collection_name = self.sanitize_collection_name(channel_id)
         collection = self.db[collection_name]
-        # Ensure we have the required fields
-        if 'id' not in item_data:
-            raise ValueError("Item data missing required 'id' field")
         item_data['timestamp'] = datetime.now()
         item_data['item_id'] = item_data['id']
-        collection.insert_one(item_data)
+        collection.insert_one(item)
         self.cleanup_collection(collection_name)
 
     def item_exists(self, item_id, channel_id):
         collection_name = self.sanitize_collection_name(channel_id)
-        return self.db[collection_name].find_one({'item_id': str(item_id)}) is not None
+        return self.db[collection_name].find_one({'item_id': item_id}) is not None

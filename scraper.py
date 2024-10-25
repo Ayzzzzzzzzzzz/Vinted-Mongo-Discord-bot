@@ -40,18 +40,14 @@ def scrape(db: Database, params: Dict[str, Any]) -> List:
         try:
             timestamp = item["photo"]["high_resolution"]["timestamp"]
         except Exception:
-            log.warning(f"Empty timestamp found for item {item.get('id', 'unknown')}")
+            log.warning("Empty timestamp found")
             print(item)
             continue
 
         if timestamp > params["last_sync"] and "id" in item:
-            if not db.item_exists(str(item["id"]), str(params["channel_id"])):
+            if not db.item_exists(item["id"], str(params["channel_id"])):
                 results.append(item)
-                try:
-                    db.insert_item(item, str(params["channel_id"]))
-                except ValueError as e:
-                    log.error(f"Failed to insert item: {e}")
-                    continue
+                db.insert_item(item, str(params["channel_id"]))
 
     return results
 
